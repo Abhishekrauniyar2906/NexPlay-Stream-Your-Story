@@ -3,10 +3,7 @@ import { toast } from "react-toastify";
 import { parseErrorMessage } from "./parseErrorMsg";
 
 const axiosInstance = axios.create({
-    
-    
-    baseURL: `${import.meta.env.VITE_BACKEND_URL}/api/v1`, 
-
+    baseURL: `${import.meta.env.VITE_BACKEND_URL}/api/v1`,
     withCredentials: true,
 });
 
@@ -19,43 +16,40 @@ axiosInstance.interceptors.request.use(
         }
         return config;
     },
-    (error) => {
-        return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
 );
 
 // Response interceptor to handle token expiration
 axiosInstance.interceptors.response.use(
-    (response) => {
-        return response;
-    },
+    (response) => response,
     async (error) => {
-        const errorMsg = parseErrorMessage(error.response.data);
+        const errorMsg = parseErrorMessage(error.response?.data);
         const originalRequest = error.config;
+
         if (
-            error.response.status === 401 &&
+            error.response?.status === 401 &&
             errorMsg === "TokenExpiredError" &&
             !originalRequest._retry
         ) {
             originalRequest._retry = true;
             try {
                 const { data } = await axios.post(
-                    "/api/v1/users/refresh-token",
+                    `${import.meta.env.VITE_BACKEND_URL}/api/v1/users/refresh-token`,
                     {},
                     { withCredentials: true }
                 );
+
                 localStorage.setItem("accessToken", data.data.accessToken);
-                axiosInstance.defaults.headers.common[
-                    "Authorization"
-                ] = `Bearer ${data.accessToken}`;
+                axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${data.data.accessToken}`;
                 return axiosInstance(originalRequest);
             } catch (err) {
                 console.error("Failed to refresh token", err);
                 localStorage.removeItem("accessToken");
-                window.location.reload();
                 toast.error("Session expired. Please login again!");
+                window.location.reload();
             }
         }
+
         return Promise.reject(error);
     }
 );
