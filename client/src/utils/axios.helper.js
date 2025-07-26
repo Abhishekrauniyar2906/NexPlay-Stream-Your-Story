@@ -3,8 +3,10 @@ import { toast } from "react-toastify";
 import { parseErrorMessage } from "./parseErrorMsg";
 
 const axiosInstance = axios.create({
-     baseURL:"http://localhost:8000/api/v1",
-    //baseURL:"https://nexplay-canm.onrender.com/api/v1",
+    
+    
+    baseURL: `${import.meta.env.VITE_BACKEND_URL}/api/v1`, 
+
     withCredentials: true,
 });
 
